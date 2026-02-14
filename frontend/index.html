@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <title>AI Deployment Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script>
+      window.APP_CONFIG = {
+        workerBaseUrl: "",
+      };
+    </script>
+    <script defer src="./app.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand-wrap">
+          <span
+            id="statusDot"
+            class="status-dot offline"
+            aria-hidden="true"
+          ></span>
+          <div>
+            <h1>AI Deployment Assistant</h1>
+            <p id="statusText" class="status-text">Checking server…</p>
+          </div>
+        </div>
+        <button
+          id="themeToggle"
+          class="theme-toggle"
+          type="button"
+          aria-label="Toggle theme"
+        >
+          ◐
+        </button>
+      </header>
+
+      <main
+        class="chat-wrap"
+        id="chatWrap"
+        aria-live="polite"
+        aria-label="Chat transcript"
+      >
+        <article class="msg assistant">
+          <p>Ready. Describe what to update on your GitHub Pages site.</p>
+        </article>
+      </main>
+
+      <footer class="composer-wrap">
+        <form id="chatForm" class="composer-form" autocomplete="off">
+          <label class="sr-only" for="promptInput">Update instruction</label>
+          <textarea
+            id="promptInput"
+            class="prompt-input"
+            name="prompt"
+            rows="3"
+            maxlength="4000"
+            placeholder="Example: Update the hero section copy, add a services grid, and refresh the CTA styling."
+            required
+          ></textarea>
+
+          <div class="composer-actions">
+            <div
+              id="progressPills"
+              class="progress-pills hidden"
+              role="status"
+              aria-live="polite"
+            >
+              <span id="pillGenerating" class="pill active">Thinking...</span>
+              <span id="pillCommitting" class="pill">Pushing...</span>
+            </div>
+            <button id="sendBtn" class="send-btn" type="submit">Deploy</button>
+          </div>
+        </form>
+      </footer>
+    </div>
+  </body>
+</html>

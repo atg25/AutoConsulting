@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>AI Consulting Portfolio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script defer src="./script.js"></script>
+  </head>
+  <body>
+    <main class="portfolio-shell">
+      <section class="hero deco-card">
+        <h1 id="heroStatement" class="hero-title"></h1>
+        <p id="aboutMe" class="hero-about"></p>
+        <p id="workPhilosophy" class="hero-philosophy"></p>
+        <ul id="coreValues" class="core-values" aria-label="Core values"></ul>
+      </section>
+
+      <section class="services deco-card">
+        <div class="section-head">
+          <h2>Services</h2>
+        </div>
+        <div id="servicesList" class="card-grid"></div>
+      </section>
+
+      <section class="demos deco-card">
+        <div class="section-head">
+          <h2>Portfolio Demos</h2>
+        </div>
+        <div id="demosList" class="card-grid"></div>
+      </section>
+
+      <section class="proof deco-card">
+        <div class="section-head">
+          <h2>Social Proof</h2>
+        </div>
+        <div id="reviewsList" class="card-grid"></div>
+      </section>
+
+      <section class="connect deco-card">
+        <div class="section-head">
+          <h2>Connect</h2>
+        </div>
+        <div id="connectLinks" class="links"></div>
+        <a id="bookConsultationBtn" class="book-btn" href="#" role="button">
+          Book a Consultation
+        </a>
+      </section>
+
+      <footer class="site-footer deco-card">
+        <p class="ai-tagline">
+          This site is autonomously maintained by an AI Assistant. Change
+          happens in seconds, not days.
+        </p>
+      </footer>
+
+      <p id="portfolioError" class="error-text hidden" role="alert"></p>
+    </main>
+  </body>
+</html>

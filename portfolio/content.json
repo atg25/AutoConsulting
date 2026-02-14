@@ -1,0 +1,58 @@
+{
+  "personal_brand": {
+    "hero_statement": "I don't maintain this website; my custom AI assistant does.",
+    "about_me": "I architect practical AI systems for service businesses that value operational excellence.",
+    "core_values": ["Efficiency", "Transparency", "Automation"],
+    "work_philosophy": "Sophisticated systems should remove friction, clarify decisions, and create reliable outcomes without unnecessary complexity."
+  },
+  "services": [
+    {
+      "service_name": "AI Workflow Architecture",
+      "description": "Designs reliable automations across lead capture, delivery operations, and reporting.",
+      "client_value_add": "Reduces manual overhead while improving consistency and visibility."
+    }
+  ],
+  "portfolio_demos": [
+    {
+      "project_title": "Pure Home Inspections",
+      "problem_solved": "Manual lead follow-up and post-inspection communication caused inconsistent client response times.",
+      "demo_url": "https://example.com/pure-home-inspections",
+      "repo_url": "https://github.com/example/pure-home-inspections"
+    },
+    {
+      "project_title": "NextGen Wallcovering",
+      "problem_solved": "Scheduling and estimate workflows lacked transparency, creating delivery delays and status confusion.",
+      "demo_url": "https://example.com/nextgen-wallcovering",
+      "repo_url": "https://github.com/example/nextgen-wallcovering"
+    },
+    {
+      "project_title": "AInspire",
+      "problem_solved": "Content and campaign operations were fragmented, limiting repeatable growth execution.",
+      "demo_url": "https://example.com/ainspire",
+      "repo_url": "https://github.com/example/ainspire"
+    }
+  ],
+  "social_proof": {
+    "google_reviews": [
+      {
+        "quote": "Client Name — Andrew’s automation transformed our workflow from reactive handoffs to reliable execution in under two weeks.",
+        "stars": 5
+      },
+      {
+        "quote": "Client Name — We gained total transparency across delivery and communication, and our team finally stopped chasing status updates.",
+        "stars": 5
+      },
+      {
+        "quote": "Client Name — The system Andrew designed gave us measurable efficiency gains while preserving the premium client experience.",
+        "stars": 5
+      }
+    ]
+  },
+  "connect_links": {
+    "linkedin": "https://linkedin.com/in/andrew",
+    "github": "https://github.com/andrew",
+    "facebook": "https://facebook.com/andrew",
+    "instagram": "https://instagram.com/andrew",
+    "scheduling_url": "https://calendly.com/andrew/consultation"
+  }
+}

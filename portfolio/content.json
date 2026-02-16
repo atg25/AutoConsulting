@@ -2,7 +2,11 @@
   "personal_brand": {
     "hero_statement": "I don't maintain this website; my custom AI assistant does.",
     "about_me": "I architect practical AI systems for service businesses that value operational excellence.",
-    "core_values": ["Efficiency", "Transparency", "Automation"],
+    "core_values": [
+      "Efficiency",
+      "Transparency",
+      "Automation"
+    ],
     "work_philosophy": "Sophisticated systems should remove friction, clarify decisions, and create reliable outcomes without unnecessary complexity."
   },
   "services": [
@@ -16,7 +20,7 @@
     {
       "project_title": "Pure Home Inspections",
       "problem_solved": "Manual lead follow-up and post-inspection communication caused inconsistent client response times.",
-      "demo_url": "https://example.com/pure-home-inspections",
+      "demo_url": "https://njpurehome.com",
       "repo_url": "https://github.com/example/pure-home-inspections"
     },
     {

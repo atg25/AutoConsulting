@@ -1,5 +1,45 @@
 const byId = (id) => document.getElementById(id);
 
+const THEME_STORAGE_KEY = "portfolioTheme";
+
+function getPreferredTheme() {
+  const stored = String(localStorage.getItem(THEME_STORAGE_KEY) || "").trim();
+  if (stored === "dark" || stored === "light") return stored;
+  return window.matchMedia &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+}
+
+function applyTheme(theme) {
+  const nextTheme = theme === "light" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", nextTheme);
+  const toggle = byId("themeToggle");
+  if (toggle) {
+    toggle.textContent = nextTheme === "dark" ? "Dark" : "Light";
+    toggle.setAttribute(
+      "aria-label",
+      `Toggle color theme (currently ${nextTheme})`,
+    );
+  }
+}
+
+function initThemeToggle() {
+  applyTheme(getPreferredTheme());
+  const toggle = byId("themeToggle");
+  if (!toggle) return;
+
+  toggle.addEventListener("click", () => {
+    const current =
+      document.documentElement.getAttribute("data-theme") === "light"
+        ? "light"
+        : "dark";
+    const next = current === "dark" ? "light" : "dark";
+    localStorage.setItem(THEME_STORAGE_KEY, next);
+    applyTheme(next);
+  });
+}
+
 function text(el, value) {
   if (el) {
     el.textContent = value || "";
@@ -107,6 +147,8 @@ function renderPortfolio(data) {
 async function boot() {
   const errorEl = byId("portfolioError");
   try {
+    initThemeToggle();
+
     const response = await fetch("./content.json", {
       method: "GET",
       headers: { Accept: "application/json" },

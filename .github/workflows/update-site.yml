@@ -214,24 +214,58 @@ jobs:
             };
           }
 
+          function coerceArray(value) {
+            if (Array.isArray(value)) return value;
+            if (value && typeof value === 'object') return [value];
+            return undefined;
+          }
+
+          function mergeArrayByKey(existingArr, partialArr, keyField) {
+            if (!Array.isArray(existingArr)) return partialArr;
+            if (!Array.isArray(partialArr)) return existingArr;
+            const merged = existingArr.map((item) => {
+              const match = partialArr.find(
+                (p) =>
+                  p[keyField] &&
+                  item[keyField] &&
+                  p[keyField].toLowerCase().includes(item[keyField].toLowerCase().split(' ')[0]),
+              );
+              return match ? { ...item, ...match } : item;
+            });
+            partialArr.forEach((p) => {
+              const exists = merged.some(
+                (m) =>
+                  m[keyField] &&
+                  p[keyField] &&
+                  p[keyField].toLowerCase().includes(m[keyField].toLowerCase().split(' ')[0]),
+              );
+              if (!exists) merged.push(p);
+            });
+            return merged;
+          }
+
           function mergeWithExistingContent(existingContent, partialContent) {
+            const partialDemos = coerceArray(partialContent.portfolio_demos);
+            const partialServices = coerceArray(partialContent.services);
+            const partialReviews = coerceArray(partialContent.social_proof?.google_reviews);
+
             return {
               personal_brand: {
                 ...(existingContent.personal_brand || {}),
                 ...(partialContent.personal_brand || {}),
               },
               services:
-                partialContent.services !== undefined
-                  ? partialContent.services
+                partialServices !== undefined
+                  ? mergeArrayByKey(existingContent.services, partialServices, 'service_name')
                   : existingContent.services,
               portfolio_demos:
-                partialContent.portfolio_demos !== undefined
-                  ? partialContent.portfolio_demos
+                partialDemos !== undefined
+                  ? mergeArrayByKey(existingContent.portfolio_demos, partialDemos, 'project_title')
                   : existingContent.portfolio_demos,
               social_proof: {
                 google_reviews:
-                  partialContent.social_proof?.google_reviews !== undefined
-                    ? partialContent.social_proof.google_reviews
+                  partialReviews !== undefined
+                    ? partialReviews
                     : existingContent.social_proof?.google_reviews,
               },
               connect_links: {
@@ -349,6 +383,18 @@ jobs:
               fail('Missing required secret: LLM_API_KEY (or OPENAI_API_KEY)');
             }
 
+            const userMessage = [
+              'Here is the current content.json:',
+              '```json',
+              JSON.stringify(existingContent, null, 2),
+              '```',
+              '',
+              'Instruction: ' + prompt,
+              '',
+              'Return the COMPLETE updated content.json with ALL five top-level keys.',
+              'Apply only the requested change and keep everything else identical.',
+            ].join('\n');
+
             const response = await fetch(process.env.LLM_API_URL, {
               method: 'POST',
               headers: {
@@ -360,7 +406,7 @@ jobs:
                 temperature: 0.2,
                 messages: [
                   { role: 'system', content: systemPrompt },
-                  { role: 'user', content: prompt },
+                  { role: 'user', content: userMessage },
                 ],
               }),
             });

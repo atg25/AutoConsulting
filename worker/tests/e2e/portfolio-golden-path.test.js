@@ -140,7 +140,7 @@ describe("portfolio golden path", () => {
       expect(rootText).toMatch(/transparency/i);
       expect(rootText).toMatch(/automation/i);
       expect(rootText).toMatch(
-        /this site is autonomously maintained by an ai assistant\. change happens in seconds, not days\./i,
+        /this site is autonomously maintained by an ai assistant\.\s*change\s+happens in seconds, not days\./i,
       );
 
       const reviewCards = document.querySelectorAll("#reviewsList .card-item");

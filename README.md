@@ -1,58 +1,98 @@
-🏛️ The AI Deployment Assistant & Consulting Portfolio
+# Autonomous, Zero-Maintenance Consulting Portfolio
 
-An Autonomous, Zero-Maintenance Architecture for the Efficiency Architect.
-📋 Overview
+An end-to-end portfolio system for the Efficiency Architect: bold public positioning, strict operational guardrails, and content updates that deploy in seconds without manual file editing.
 
-This project is a high-end, self-maintaining digital presence designed for the modern AI Consultant. It consists of two primary components:
+## The Hook
 
-    The Control App: A private, mobile-first chat interface (Art Deco style) that allows the owner to update the website content via natural language.
+This project is an Autonomous, Zero-Maintenance Consulting Portfolio built on three brand pillars:
 
-    The Public Portfolio: A headless, high-performance static site that dynamically renders content from a version-controlled JSON database.
+- Efficiency
+- Transparency
+- Automation
 
-🏗️ Architecture: The "Zero-Cost" Stack
+The owner updates content from a private admin console using plain-language instructions. The system validates output, commits changes, and publishes the live site automatically.
 
-The system is built on a strictly free-tier, enterprise-grade serverless stack to ensure $0/month overhead.
-Component Technology Purpose
-Frontend UI Cloudflare Pages Hosts the private Chat Control App.
-Logic Layer Cloudflare Workers The "Guardrail" that validates AI output and handles GitHub commits.
-Database GitHub (JSON) Stores the content.json file as the single source of truth.
-Public Site GitHub Pages Renders the Art Deco portfolio for the world to see.
-🛠️ The Development Process (TDD Sprints)
+## 100% GitHub-Native Architecture
 
-This project was built using a Test-Driven Development (TDD) approach across 6 organized sprints. No code was implemented until a failing test proved the need for it.
+### Hosting: GitHub Pages
 
-    Sprint 1: Foundation. Initialized the testing harness and serverless environment.
+- Public portfolio is hosted on GitHub Pages.
+- Design direction: Minimal Modern / Brutalist-dark aesthetic with strong readability.
+- Runtime cost for hosting: $0 on GitHub Pages free tier.
 
-    Sprint 2: The Contract. Defined the content.json schema to prevent the AI from breaking the site.
+### Database: content.json as a Headless CMS
 
-    Sprint 3: The Pipeline. Built the Git REST API sequence to push updates autonomously.
+- content.json is the single source of truth for portfolio content.
+- Frontend renders all core public sections from this file:
+  - personal_brand
+  - services
+  - portfolio_demos
+  - social_proof
+  - connect_links
 
-    Sprint 4: The Interface. Developed the "Minimal Art Deco Chic" mobile UI with resilience for network failures.
+### Control Panel: admin.html
 
-    Sprint 5: The Guardrails. Hardened the LLM system prompt to reject "prose fluff" and enforce brand values.
+- admin.html is an unlisted owner console for dispatching content updates.
+- Uses GitHub workflow_dispatch API calls.
+- PAT is held in browser sessionStorage for the current tab session.
+- No backend server required for dispatch.
 
-    Sprint 6: The Launch. Built the headless public portfolio and integrated the dynamic demo projects.
+### Engine: GitHub Actions (update-site.yml)
 
-🛡️ Safety & Guardrails: Why it Won't Break
+- update-site.yml is the AI Bouncer pipeline.
+- It calls the LLM, enforces strict JSON-only output, rejects forbidden schema keys, validates required structure, then writes and commits content.json.
+- If output fails validation, the workflow exits with a hard fail and prevents bad data from shipping.
 
-Unlike typical "AI-generated" sites, this architecture is decoupled.
+## Update Workflow (Owner Instruction → Live Site)
 
-    Data vs. Code: The AI is only permitted to edit a single JSON file. It has no access to the HTML, CSS, or Javascript files.
+1. Dispatch
+   - Owner submits an instruction in admin.html.
+   - Admin console triggers workflow_dispatch on update-site.yml.
 
-    Schema Policing: The Cloudflare Worker acts as a filter. If the AI tries to inject invalid data or styling, the Worker rejects the update before it ever touches GitHub.
+2. AI Processing
+   - Workflow sends the instruction (plus current content context) to the LLM.
 
-    Tone Control: The system is primed with the "Efficiency Architect" brand pillars: Efficiency, Transparency, and Automation.
+3. Schema Validation (AI Bouncer)
+   - Workflow enforces strict JSON envelope.
+   - Validates required top-level schema and nested required fields.
+   - Rejects forbidden keys such as pricing/tier/style variants.
+   - Normalizes/sanitizes output before write.
 
-🚀 How to Use
+4. Auto-Commit
+   - Workflow updates content.json.
+   - GitHub Actions bot commits and pushes to main.
 
-    Open the Control App: Access your private Cloudflare Pages URL on your iPhone.
+5. Live Update
+   - GitHub Pages serves the updated content on the public site.
 
-    Check the Status: Ensure the status dot is Green (indicating the Cloudflare Worker is online).
+## Fork & Setup Guide
 
-    Chat to Update: Simply type: "Add a new Google Review from John Doe saying the automation was life-changing" or "Update my Work Philosophy to mention my new project."
+To deploy your own version:
 
-    Verify: Watch the status move from Thinking to Pushed. Your public site updates in seconds.
+1. Fork this repository.
 
-👤 Credits
+2. Configure repository secrets.
+   - Add OPENAI_API_KEY (or LLM_API_KEY) in repository Secrets and variables → Actions.
 
-    Lead Architect: Andrew Gardner
+3. Ensure workflow permissions are enabled.
+   - Repository Settings → Actions → General.
+   - Set Workflow permissions to Read and write permissions.
+
+4. Enable GitHub Pages.
+   - Repository Settings → Pages.
+   - Deploy from branch: main, folder: root.
+
+5. Use the admin console.
+   - Open portfolio/admin.html on your GitHub Pages URL.
+   - Enter a fine-grained PAT with Actions write access for your fork.
+   - Submit content instructions; the workflow handles validation + publish.
+
+## Why This Works in Production
+
+- Data and design are decoupled: AI updates content only, not code.
+- Guardrails are deterministic: invalid or malformed model output is blocked.
+- Operations are simple: one repo, one workflow, one content source of truth.
+
+## Credits
+
+- Lead Architect: Andrew Gardner

@@ -1,0 +1,381 @@
+name: Update Site Content
+
+on:
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: Instruction for AI content update
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-site-main
+  cancel-in-progress: false
+
+jobs:
+  update-content:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Generate and validate content JSON
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          USER_PROMPT: ${{ inputs.prompt }}
+          LLM_API_URL: https://api.openai.com/v1/chat/completions
+          LLM_MODEL: gpt-4.1-mini
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+
+          function fail(message) {
+            throw new Error(message);
+          }
+
+          function safeParseJson(text) {
+            try {
+              return JSON.parse(text);
+            } catch {
+              return null;
+            }
+          }
+
+          function enforceStrictJsonEnvelope(content) {
+            const normalized = String(content || '').trim();
+            if (!normalized) fail('LLM output must be strict JSON');
+
+            const fenced = normalized.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+            if (fenced?.[1]) return fenced[1].trim();
+
+            if (normalized.startsWith('{') && normalized.endsWith('}')) {
+              return normalized;
+            }
+
+            fail('LLM output must be strict JSON without conversational text');
+          }
+
+          function looksLikeContentSchema(value) {
+            if (!value || typeof value !== 'object' || Array.isArray(value)) {
+              return false;
+            }
+            const keys = [
+              'personal_brand',
+              'services',
+              'portfolio_demos',
+              'social_proof',
+              'connect_links',
+            ];
+            return keys.every((key) => key in value);
+          }
+
+          function resolveContentJsonCandidate(parsed) {
+            if (parsed.contentJson !== undefined) return parsed.contentJson;
+            if (parsed.content_json !== undefined) return parsed.content_json;
+            if (looksLikeContentSchema(parsed.result)) return parsed.result;
+            if (looksLikeContentSchema(parsed.data)) return parsed.data;
+
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+              for (const value of Object.values(parsed)) {
+                if (looksLikeContentSchema(value)) return value;
+              }
+            }
+
+            if (looksLikeContentSchema(parsed)) return parsed;
+
+            fail('LLM response missing contentJson field');
+          }
+
+          function sanitizeObject(value, allowedKeys) {
+            if (!value || typeof value !== 'object' || Array.isArray(value)) {
+              return value;
+            }
+            return Object.fromEntries(
+              Object.entries(value).filter(([key]) => allowedKeys.includes(key)),
+            );
+          }
+
+          function rejectForbiddenKeys(value) {
+            if (Array.isArray(value)) {
+              value.forEach((item) => rejectForbiddenKeys(item));
+              return;
+            }
+            if (!value || typeof value !== 'object') return;
+
+            for (const [key, nested] of Object.entries(value)) {
+              const lower = key.toLowerCase();
+              if (
+                lower.includes('price') ||
+                lower.includes('pricing') ||
+                lower.includes('tier') ||
+                lower.includes('style')
+              ) {
+                fail('Pricing or style/tier data is not allowed in this schema');
+              }
+              rejectForbiddenKeys(nested);
+            }
+          }
+
+          function requiredObject(value, path) {
+            if (!value || typeof value !== 'object' || Array.isArray(value)) {
+              fail(`${path} must be an object`);
+            }
+            return value;
+          }
+
+          function requiredArray(value, path) {
+            if (!Array.isArray(value)) fail(`${path} must be an array`);
+            return value;
+          }
+
+          function requiredString(value, path) {
+            if (!String(value || '').trim()) fail(`${path} must be a non-empty string`);
+          }
+
+          function requiredStringArray(value, path) {
+            if (
+              !Array.isArray(value) ||
+              value.length === 0 ||
+              value.some((item) => !String(item || '').trim())
+            ) {
+              fail(`${path} must be an array of non-empty strings`);
+            }
+          }
+
+          function requiredStars(value, path) {
+            if (!Number.isInteger(value) || value < 1 || value > 5) {
+              fail(`${path} must be an integer between 1 and 5`);
+            }
+          }
+
+          function requireKeys(value, requiredKeys, path) {
+            for (const key of requiredKeys) {
+              if (!(key in value)) fail(`Missing required key: ${path}.${key}`);
+            }
+          }
+
+          function sanitizeContentJson(contentJson) {
+            return {
+              personal_brand: sanitizeObject(contentJson.personal_brand, [
+                'hero_statement',
+                'about_me',
+                'core_values',
+                'work_philosophy',
+              ]),
+              services: Array.isArray(contentJson.services)
+                ? contentJson.services.map((service) =>
+                    sanitizeObject(service, [
+                      'service_name',
+                      'description',
+                      'client_value_add',
+                    ]),
+                  )
+                : contentJson.services,
+              portfolio_demos: Array.isArray(contentJson.portfolio_demos)
+                ? contentJson.portfolio_demos.map((demo) =>
+                    sanitizeObject(demo, [
+                      'project_title',
+                      'problem_solved',
+                      'demo_url',
+                      'repo_url',
+                    ]),
+                  )
+                : contentJson.portfolio_demos,
+              social_proof: {
+                google_reviews: Array.isArray(contentJson.social_proof?.google_reviews)
+                  ? contentJson.social_proof.google_reviews.map((review) =>
+                      sanitizeObject(review, ['quote', 'stars']),
+                    )
+                  : contentJson.social_proof?.google_reviews,
+              },
+              connect_links: sanitizeObject(contentJson.connect_links, [
+                'linkedin',
+                'github',
+                'facebook',
+                'instagram',
+                'scheduling_url',
+              ]),
+            };
+          }
+
+          function validateRequiredSchema(contentJson) {
+            requiredObject(contentJson, 'contentJson');
+
+            requiredObject(contentJson.personal_brand, 'personal_brand');
+            requireKeys(
+              contentJson.personal_brand,
+              ['hero_statement', 'about_me', 'core_values', 'work_philosophy'],
+              'personal_brand',
+            );
+            requiredString(contentJson.personal_brand.hero_statement, 'personal_brand.hero_statement');
+            requiredString(contentJson.personal_brand.about_me, 'personal_brand.about_me');
+            requiredString(contentJson.personal_brand.work_philosophy, 'personal_brand.work_philosophy');
+            requiredStringArray(contentJson.personal_brand.core_values, 'personal_brand.core_values');
+
+            const services = requiredArray(contentJson.services, 'services');
+            services.forEach((item, index) => {
+              const path = `services[${index}]`;
+              const service = requiredObject(item, path);
+              requireKeys(service, ['service_name', 'description', 'client_value_add'], path);
+              requiredString(service.service_name, `${path}.service_name`);
+              requiredString(service.description, `${path}.description`);
+              requiredString(service.client_value_add, `${path}.client_value_add`);
+            });
+
+            const demos = requiredArray(contentJson.portfolio_demos, 'portfolio_demos');
+            demos.forEach((item, index) => {
+              const path = `portfolio_demos[${index}]`;
+              const demo = requiredObject(item, path);
+              requireKeys(demo, ['project_title', 'problem_solved', 'demo_url', 'repo_url'], path);
+              requiredString(demo.project_title, `${path}.project_title`);
+              requiredString(demo.problem_solved, `${path}.problem_solved`);
+              requiredString(demo.demo_url, `${path}.demo_url`);
+              requiredString(demo.repo_url, `${path}.repo_url`);
+            });
+
+            const socialProof = requiredObject(contentJson.social_proof, 'social_proof');
+            requireKeys(socialProof, ['google_reviews'], 'social_proof');
+            const reviews = requiredArray(socialProof.google_reviews, 'social_proof.google_reviews');
+            reviews.forEach((item, index) => {
+              const path = `social_proof.google_reviews[${index}]`;
+              const review = requiredObject(item, path);
+              requireKeys(review, ['quote', 'stars'], path);
+              requiredString(review.quote, `${path}.quote`);
+              requiredStars(review.stars, `${path}.stars`);
+            });
+
+            const connectLinks = requiredObject(contentJson.connect_links, 'connect_links');
+            requireKeys(
+              connectLinks,
+              ['linkedin', 'github', 'facebook', 'instagram', 'scheduling_url'],
+              'connect_links',
+            );
+            requiredString(connectLinks.linkedin, 'connect_links.linkedin');
+            requiredString(connectLinks.github, 'connect_links.github');
+            requiredString(connectLinks.facebook, 'connect_links.facebook');
+            requiredString(connectLinks.instagram, 'connect_links.instagram');
+            requiredString(connectLinks.scheduling_url, 'connect_links.scheduling_url');
+          }
+
+          function normalizeContentJson(candidate) {
+            let normalizedObject;
+
+            if (typeof candidate === 'string') {
+              const reparsed = safeParseJson(candidate);
+              if (!reparsed || typeof reparsed !== 'object' || Array.isArray(reparsed)) {
+                fail('contentJson must be a valid JSON object');
+              }
+              normalizedObject = reparsed;
+            } else if (candidate && typeof candidate === 'object' && !Array.isArray(candidate)) {
+              normalizedObject = candidate;
+            } else {
+              fail('contentJson must be a valid JSON object');
+            }
+
+            rejectForbiddenKeys(normalizedObject);
+            const sanitized = sanitizeContentJson(normalizedObject);
+            validateRequiredSchema(sanitized);
+            return JSON.stringify(sanitized, null, 2);
+          }
+
+          async function callLlm(prompt) {
+            const systemPrompt = [
+              'You are a Content Data Engineer.',
+              'Return ONLY strict JSON (no prose, no markdown, no wrapper text).',
+              'Allowed output: content updates for content.json schema only.',
+              'Never output html/css/js.',
+              'Keep brand pillars: Efficiency, Transparency, Automation.',
+              'Required top-level keys:',
+              'personal_brand, services, portfolio_demos, social_proof, connect_links',
+              'Forbidden anywhere: price/pricing/tier/style keys.',
+            ].join('\n');
+
+            const response = await fetch(process.env.LLM_API_URL, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${process.env.LLM_API_KEY}`,
+              },
+              body: JSON.stringify({
+                model: process.env.LLM_MODEL,
+                temperature: 0.2,
+                messages: [
+                  { role: 'system', content: systemPrompt },
+                  { role: 'user', content: prompt },
+                ],
+              }),
+            });
+
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+              fail(payload?.error?.message || `LLM request failed (${response.status})`);
+            }
+
+            const content = payload?.choices?.[0]?.message?.content;
+            if (!content || typeof content !== 'string') {
+              fail('LLM returned an empty response');
+            }
+
+            const strictJson = enforceStrictJsonEnvelope(content);
+            const parsed = safeParseJson(strictJson);
+            if (!parsed) {
+              fail('Invalid LLM JSON output');
+            }
+
+            if (parsed.html || parsed.css || parsed.js) {
+              fail('LLM output must not contain html/css/js fields');
+            }
+
+            const candidate = resolveContentJsonCandidate(parsed);
+            return normalizeContentJson(candidate);
+          }
+
+          const prompt = String(process.env.USER_PROMPT || '').trim();
+          const apiKey = String(process.env.LLM_API_KEY || '').trim();
+
+          if (!prompt) {
+            fail('Missing workflow input: prompt');
+          }
+
+          if (!apiKey) {
+            fail('Missing required secret: LLM_API_KEY');
+          }
+
+          callLlm(prompt)
+            .then((contentJson) => {
+              fs.writeFileSync('portfolio/content.json', contentJson + '\n', 'utf8');
+              console.log('content.json updated successfully');
+            })
+            .catch((error) => {
+              console.error(error.message || error);
+              process.exit(1);
+            });
+          NODE
+
+      - name: Commit and push content update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add portfolio/content.json
+
+          if git diff --cached --quiet; then
+            echo "No content changes detected."
+            exit 0
+          fi
+
+          git commit -m "chore: AI content update"
+
+          git pull --rebase origin main
+          git push origin HEAD:main

@@ -220,6 +220,21 @@ jobs:
             return undefined;
           }
 
+          function normalizeText(value) {
+            return String(value || '')
+              .toLowerCase()
+              .replace(/[^a-z0-9\s]/g, ' ')
+              .replace(/\s+/g, ' ')
+              .trim();
+          }
+
+          function isLikelySameEntity(a, b) {
+            const left = normalizeText(a);
+            const right = normalizeText(b);
+            if (!left || !right) return false;
+            return left === right || left.includes(right) || right.includes(left);
+          }
+
           function mergeArrayByKey(existingArr, partialArr, keyField) {
             if (!Array.isArray(existingArr)) return partialArr;
             if (!Array.isArray(partialArr)) return existingArr;
@@ -228,7 +243,7 @@ jobs:
                 (p) =>
                   p[keyField] &&
                   item[keyField] &&
-                  p[keyField].toLowerCase().includes(item[keyField].toLowerCase().split(' ')[0]),
+                  isLikelySameEntity(p[keyField], item[keyField]),
               );
               return match ? { ...item, ...match } : item;
             });
@@ -237,11 +252,60 @@ jobs:
                 (m) =>
                   m[keyField] &&
                   p[keyField] &&
-                  p[keyField].toLowerCase().includes(m[keyField].toLowerCase().split(' ')[0]),
+                  isLikelySameEntity(p[keyField], m[keyField]),
               );
               if (!exists) merged.push(p);
             });
             return merged;
+          }
+
+          function parseDemoLinkUpdatePrompt(prompt) {
+            const match = String(prompt || '').match(
+              /update\s+the\s+demo\s+link\s+for\s+(.+?)\s+to\s+(?:direct\s+to\s+)?(\S+)/i,
+            );
+            if (!match) return null;
+
+            const projectTitle = String(match[1] || '')
+              .trim()
+              .replace(/^['"]|['"]$/g, '');
+            let demoUrl = String(match[2] || '')
+              .trim()
+              .replace(/[),.;!?]+$/, '');
+
+            if (!/^https?:\/\//i.test(demoUrl)) {
+              demoUrl = `https://${demoUrl}`;
+            }
+
+            if (!projectTitle || !demoUrl) {
+              return null;
+            }
+
+            return { projectTitle, demoUrl };
+          }
+
+          function applyDeterministicPromptEdits(contentJson, prompt) {
+            const demoUpdate = parseDemoLinkUpdatePrompt(prompt);
+            if (!demoUpdate) return contentJson;
+
+            const { projectTitle, demoUrl } = demoUpdate;
+            if (!Array.isArray(contentJson.portfolio_demos)) {
+              return contentJson;
+            }
+
+            const next = {
+              ...contentJson,
+              portfolio_demos: contentJson.portfolio_demos.map((demo) => ({ ...demo })),
+            };
+
+            const idx = next.portfolio_demos.findIndex((demo) =>
+              isLikelySameEntity(demo.project_title, projectTitle),
+            );
+
+            if (idx >= 0) {
+              next.portfolio_demos[idx].demo_url = demoUrl;
+            }
+
+            return next;
           }
 
           function mergeWithExistingContent(existingContent, partialContent) {
@@ -457,7 +521,19 @@ jobs:
 
           callLlm(prompt, apiKey, existingContent)
             .then((contentJson) => {
-              fs.writeFileSync('portfolio/content.json', contentJson + '\n', 'utf8');
+              const parsedContent = safeParseJson(contentJson);
+              if (!parsedContent || typeof parsedContent !== 'object' || Array.isArray(parsedContent)) {
+                fail('Generated contentJson must be a valid JSON object');
+              }
+
+              const finalContent = applyDeterministicPromptEdits(parsedContent, prompt);
+              validateRequiredSchema(finalContent);
+
+              fs.writeFileSync(
+                'portfolio/content.json',
+                JSON.stringify(finalContent, null, 2) + '\n',
+                'utf8',
+              );
               console.log('content.json updated successfully');
             })
             .catch((error) => {

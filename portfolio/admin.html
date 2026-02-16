@@ -240,8 +240,14 @@
 
     <script>
       (function () {
-        const OWNER = "atg25";
-        const REPO = "ai-consulting-portfolio";
+        const ownerFromHost = window.location.hostname.endsWith(".github.io")
+          ? window.location.hostname.split(".")[0]
+          : "atg25";
+        const pathParts = window.location.pathname.split("/").filter(Boolean);
+        const repoFromPath = pathParts[0] || "AutoConsulting";
+
+        const OWNER = ownerFromHost;
+        const REPO = repoFromPath;
         const WORKFLOW_FILE = "update-site.yml";
         const STORAGE_KEY = "admin_pat_session";
 
@@ -252,6 +258,13 @@
         const statusText = document.getElementById("statusText");
         const runLinkWrap = document.getElementById("runLinkWrap");
         const runLink = document.getElementById("runLink");
+        const repoOwnerInput = document.getElementById("repoOwner");
+        const repoNameInput = document.getElementById("repoName");
+        const workflowRefInput = document.getElementById("workflowRef");
+
+        repoOwnerInput.value = OWNER;
+        repoNameInput.value = REPO;
+        workflowRefInput.value = "main";
 
         const storedPat = sessionStorage.getItem(STORAGE_KEY);
         if (storedPat) {

@@ -95,6 +95,10 @@ jobs:
 
             if (looksLikeContentSchema(parsed)) return parsed;
 
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+              return parsed;
+            }
+
             fail('LLM response missing contentJson field');
           }
 
@@ -210,6 +214,33 @@ jobs:
             };
           }
 
+          function mergeWithExistingContent(existingContent, partialContent) {
+            return {
+              personal_brand: {
+                ...(existingContent.personal_brand || {}),
+                ...(partialContent.personal_brand || {}),
+              },
+              services:
+                partialContent.services !== undefined
+                  ? partialContent.services
+                  : existingContent.services,
+              portfolio_demos:
+                partialContent.portfolio_demos !== undefined
+                  ? partialContent.portfolio_demos
+                  : existingContent.portfolio_demos,
+              social_proof: {
+                google_reviews:
+                  partialContent.social_proof?.google_reviews !== undefined
+                    ? partialContent.social_proof.google_reviews
+                    : existingContent.social_proof?.google_reviews,
+              },
+              connect_links: {
+                ...(existingContent.connect_links || {}),
+                ...(partialContent.connect_links || {}),
+              },
+            };
+          }
+
           function validateRequiredSchema(contentJson) {
             requiredObject(contentJson, 'contentJson');
 
@@ -269,7 +300,7 @@ jobs:
             requiredString(connectLinks.scheduling_url, 'connect_links.scheduling_url');
           }
 
-          function normalizeContentJson(candidate) {
+          function normalizeContentJson(candidate, existingContent) {
             let normalizedObject;
 
             if (typeof candidate === 'string') {
@@ -284,13 +315,20 @@ jobs:
               fail('contentJson must be a valid JSON object');
             }
 
+            if (!looksLikeContentSchema(normalizedObject)) {
+              normalizedObject = mergeWithExistingContent(
+                existingContent,
+                normalizedObject,
+              );
+            }
+
             rejectForbiddenKeys(normalizedObject);
             const sanitized = sanitizeContentJson(normalizedObject);
             validateRequiredSchema(sanitized);
             return JSON.stringify(sanitized, null, 2);
           }
 
-          async function callLlm(prompt, apiKey) {
+          async function callLlm(prompt, apiKey, existingContent) {
             const systemPrompt = [
               'You are a Content Data Engineer.',
               'Return ONLY strict JSON (no prose, no markdown, no wrapper text).',
@@ -348,13 +386,16 @@ jobs:
             }
 
             const candidate = resolveContentJsonCandidate(parsed);
-            return normalizeContentJson(candidate);
+            return normalizeContentJson(candidate, existingContent);
           }
 
           const prompt = String(process.env.USER_PROMPT || '').trim();
           const apiKey = String(
             process.env.LLM_API_KEY || process.env.OPENAI_API_KEY || '',
           ).trim();
+          const existingContent = safeParseJson(
+            fs.readFileSync('portfolio/content.json', 'utf8'),
+          );
 
           if (!prompt) {
             fail('Missing workflow input: prompt');
@@ -364,7 +405,11 @@ jobs:
             fail('Missing required secret: LLM_API_KEY (or OPENAI_API_KEY)');
           }
 
-          callLlm(prompt, apiKey)
+          if (!existingContent || typeof existingContent !== 'object' || Array.isArray(existingContent)) {
+            fail('Existing portfolio/content.json is missing or invalid');
+          }
+
+          callLlm(prompt, apiKey, existingContent)
             .then((contentJson) => {
               fs.writeFileSync('portfolio/content.json', contentJson + '\n', 'utf8');
               console.log('content.json updated successfully');

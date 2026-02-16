@@ -33,6 +33,7 @@ jobs:
       - name: Generate and validate content JSON
         env:
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           USER_PROMPT: ${{ inputs.prompt }}
           LLM_API_URL: https://api.openai.com/v1/chat/completions
           LLM_MODEL: gpt-4.1-mini
@@ -289,7 +290,7 @@ jobs:
             return JSON.stringify(sanitized, null, 2);
           }
 
-          async function callLlm(prompt) {
+          async function callLlm(prompt, apiKey) {
             const systemPrompt = [
               'You are a Content Data Engineer.',
               'Return ONLY strict JSON (no prose, no markdown, no wrapper text).',
@@ -301,11 +302,20 @@ jobs:
               'Forbidden anywhere: price/pricing/tier/style keys.',
             ].join('\n');
 
+            const cleanApiKey = String(apiKey || '')
+              .replace(/^Bearer\s+/i, '')
+              .replace(/\s+/g, '')
+              .trim();
+
+            if (!cleanApiKey) {
+              fail('Missing required secret: LLM_API_KEY (or OPENAI_API_KEY)');
+            }
+
             const response = await fetch(process.env.LLM_API_URL, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${process.env.LLM_API_KEY}`,
+                Authorization: `Bearer ${cleanApiKey}`,
               },
               body: JSON.stringify({
                 model: process.env.LLM_MODEL,
@@ -342,17 +352,19 @@ jobs:
           }
 
           const prompt = String(process.env.USER_PROMPT || '').trim();
-          const apiKey = String(process.env.LLM_API_KEY || '').trim();
+          const apiKey = String(
+            process.env.LLM_API_KEY || process.env.OPENAI_API_KEY || '',
+          ).trim();
 
           if (!prompt) {
             fail('Missing workflow input: prompt');
           }
 
           if (!apiKey) {
-            fail('Missing required secret: LLM_API_KEY');
+            fail('Missing required secret: LLM_API_KEY (or OPENAI_API_KEY)');
           }
 
-          callLlm(prompt)
+          callLlm(prompt, apiKey)
             .then((contentJson) => {
               fs.writeFileSync('portfolio/content.json', contentJson + '\n', 'utf8');
               console.log('content.json updated successfully');

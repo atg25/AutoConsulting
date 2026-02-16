@@ -21,19 +21,19 @@
       "project_title": "Pure Home Inspections",
       "problem_solved": "Manual lead follow-up and post-inspection communication caused inconsistent client response times.",
       "demo_url": "https://njpurehome.com",
-      "repo_url": "https://github.com/example/pure-home-inspections"
+      "repo_url": "https://github.com/atg25/PHI_Website"
     },
     {
       "project_title": "NextGen Wallcovering",
       "problem_solved": "Scheduling and estimate workflows lacked transparency, creating delivery delays and status confusion.",
       "demo_url": "https://ngwallcovering.com",
-      "repo_url": "https://github.com/example/nextgen-wallcovering"
+      "repo_url": "https://github.com/atg25/NextGenWP"
     },
     {
       "project_title": "AInspire",
       "problem_solved": "Content and campaign operations were fragmented, limiting repeatable growth execution.",
-      "demo_url": "https://example.com/ainspire",
-      "repo_url": "https://github.com/example/ainspire"
+      "demo_url": "https://ainspire.vercel.app/",
+      "repo_url": "https://github.com/atg25/JobClubAi.com"
     }
   ],
   "social_proof": {

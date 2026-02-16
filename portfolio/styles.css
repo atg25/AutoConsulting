@@ -1,6 +1,7 @@
 :root {
   --accent: #22c55e;
   --accent-soft: rgba(34, 197, 94, 0.14);
+  --grid-gap: 1.25rem;
 }
 
 html[data-theme="dark"] {
@@ -48,6 +49,19 @@ body {
   text-rendering: geometricPrecision;
 }
 
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(to right, rgba(34, 197, 94, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(34, 197, 94, 0.04) 1px, transparent 1px);
+  background-size: 64px 64px;
+  opacity: 0.35;
+  mix-blend-mode: screen;
+}
+
 .portfolio-shell {
   width: min(920px, 100% - 2.5rem);
   margin: 0 auto;
@@ -56,17 +70,91 @@ body {
   gap: 1.5rem;
 }
 
-.deco-card {
-  background: var(--surface);
+.topbar {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.25rem 0;
+}
+
+.topbar-left {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.site-kicker {
+  margin: 0;
+  font-size: 0.92rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.site-mark {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.topbar-nav {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.topbar-nav a {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid transparent;
+}
+
+.topbar-nav a:hover {
+  border-bottom-color: rgba(34, 197, 94, 0.7);
+}
+
+.swiss-card {
+  background: rgba(15, 20, 17, 0.82);
   border: 1px solid var(--line);
-  border-radius: 0.85rem;
+  border-radius: 0.9rem;
   padding: 1.35rem;
+  position: relative;
+  backdrop-filter: blur(10px);
+}
+
+html[data-theme="light"] .swiss-card {
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.swiss-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    140deg,
+    rgba(34, 197, 94, 0.14),
+    transparent 42%
+  );
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.swiss-card:hover::after {
+  opacity: 1;
 }
 
 .section-head {
   margin-bottom: 0.85rem;
   padding-bottom: 0.65rem;
   border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 0.25rem;
 }
 
 h1,
@@ -88,6 +176,9 @@ h1 {
 
 .hero-title {
   margin-top: 0.25rem;
+  font-size: clamp(2.2rem, 6vw, 3.3rem);
+  line-height: 1.02;
+  letter-spacing: -0.04em;
 }
 
 h2 {
@@ -107,26 +198,46 @@ a {
   line-height: 1.65;
 }
 
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: var(--grid-gap);
+  align-items: start;
+}
+
+.hero-primary {
+  padding-right: 0.25rem;
+}
+
+.hero-secondary {
+  border-left: 1px solid var(--line);
+  padding-left: 1.1rem;
+}
+
 .hero-about,
 .hero-philosophy {
-  margin: 0.75rem 0 0;
+  margin: 0.7rem 0 0;
   color: var(--muted);
 }
 
-.hero-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.6rem;
-}
 
-.site-kicker {
+.section-label {
   margin: 0;
-  font-size: 0.92rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.84rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+}
+
+.section-label span {
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
 }
 
 .theme-toggle {
@@ -149,12 +260,21 @@ a {
 
 .core-values {
   margin: 1rem 0 0;
-  padding-left: 1.2rem;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .core-values li {
   color: var(--text);
-  margin-bottom: 0.2rem;
+  border: 1px solid var(--line);
+  background: rgba(34, 197, 94, 0.08);
+  border-radius: 999px;
+  padding: 0.25rem 0.55rem;
+  font-weight: 600;
+  font-size: 0.95rem;
 }
 
 .card-grid {
@@ -206,6 +326,21 @@ a:hover {
   gap: 0.4rem;
 }
 
+.links a {
+  text-decoration: none;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 650;
+}
+
+.links a:hover {
+  border-color: rgba(34, 197, 94, 0.7);
+  background: var(--surface-2);
+}
+
 .book-btn {
   display: inline-block;
   margin-top: 1rem;
@@ -243,6 +378,41 @@ a:hover {
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+@media (max-width: 760px) {
+  .topbar {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "left right"
+      "nav nav";
+  }
+
+  .topbar-left {
+    grid-area: left;
+  }
+
+  .topbar-right {
+    grid-area: right;
+    justify-self: end;
+  }
+
+  .topbar-nav {
+    grid-area: nav;
+    justify-content: flex-start;
+    gap: 0.85rem;
+  }
+
+  .hero-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-secondary {
+    border-left: none;
+    border-top: 1px solid var(--line);
+    padding-left: 0;
+    padding-top: 0.9rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

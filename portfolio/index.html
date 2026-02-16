@@ -18,9 +18,20 @@
   </head>
   <body>
     <main class="portfolio-shell">
-      <section class="hero deco-card">
-        <div class="hero-top">
+      <header class="topbar" role="banner">
+        <div class="topbar-left">
           <p class="site-kicker">AI Consulting</p>
+          <p class="site-mark">Systems • Automation • Delivery</p>
+        </div>
+
+        <nav class="topbar-nav" aria-label="Site">
+          <a href="#services">Services</a>
+          <a href="#portfolio">Demos</a>
+          <a href="#proof">Proof</a>
+          <a href="#connect">Connect</a>
+        </nav>
+
+        <div class="topbar-right">
           <button
             id="themeToggle"
             class="theme-toggle"
@@ -30,36 +41,51 @@
             Theme
           </button>
         </div>
-        <h1 id="heroStatement" class="hero-title"></h1>
-        <p id="aboutMe" class="hero-about"></p>
-        <p id="workPhilosophy" class="hero-philosophy"></p>
-        <ul id="coreValues" class="core-values" aria-label="Core values"></ul>
+      </header>
+
+      <section class="hero swiss-card" aria-label="Overview">
+        <div class="hero-grid">
+          <div class="hero-primary">
+            <p class="section-label"><span>00</span> Overview</p>
+            <h1 id="heroStatement" class="hero-title"></h1>
+          </div>
+
+          <div class="hero-secondary">
+            <p id="aboutMe" class="hero-about"></p>
+            <p id="workPhilosophy" class="hero-philosophy"></p>
+            <ul id="coreValues" class="core-values" aria-label="Core values"></ul>
+          </div>
+        </div>
       </section>
 
-      <section class="services deco-card">
+      <section id="services" class="services swiss-card">
         <div class="section-head">
-          <h2>Services</h2>
+          <p class="section-label"><span>01</span> Services</p>
+          <h2>What I Build</h2>
         </div>
         <div id="servicesList" class="card-grid"></div>
       </section>
 
-      <section class="demos deco-card">
+      <section id="portfolio" class="demos swiss-card">
         <div class="section-head">
+          <p class="section-label"><span>02</span> Demos</p>
           <h2>Portfolio Demos</h2>
         </div>
         <div id="demosList" class="card-grid"></div>
       </section>
 
-      <section class="proof deco-card">
+      <section id="proof" class="proof swiss-card">
         <div class="section-head">
+          <p class="section-label"><span>03</span> Proof</p>
           <h2>Social Proof</h2>
         </div>
         <div id="reviewsList" class="card-grid"></div>
       </section>
 
-      <section class="connect deco-card">
+      <section id="connect" class="connect swiss-card">
         <div class="section-head">
-          <h2>Connect</h2>
+          <p class="section-label"><span>04</span> Connect</p>
+          <h2>Let’s Talk</h2>
         </div>
         <div id="connectLinks" class="links"></div>
         <a id="bookConsultationBtn" class="book-btn" href="#" role="button">
@@ -67,7 +93,7 @@
         </a>
       </section>
 
-      <footer class="site-footer deco-card">
+      <footer class="site-footer swiss-card">
         <p class="ai-tagline">
           This site is autonomously maintained by an AI Assistant. Change
           happens in seconds, not days.
